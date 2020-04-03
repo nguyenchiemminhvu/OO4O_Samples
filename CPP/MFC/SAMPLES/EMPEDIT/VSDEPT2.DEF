@@ -1,0 +1,9 @@
+; vsdept2.def : Declares the module parameters for the application.
+
+NAME         VSDEPT32
+DESCRIPTION  'VSDEPT32 Windows Application'
+
+HEAPSIZE     1024   ; initial heap size
+; Stack size is passed as argument to linker's /STACK option
+
+

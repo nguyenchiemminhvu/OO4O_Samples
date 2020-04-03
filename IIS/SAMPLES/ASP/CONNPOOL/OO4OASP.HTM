@@ -1,0 +1,100 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<meta name="GENERATOR" content="Microsoft FrontPage 3.0">
+<title>This Active Server Pages (</title>
+</head>
+
+<body bgcolor="#FFFFFF">
+
+<p align="center"><font color="#000000"><strong>Active Server Pages (ASP) sample
+demonstrating the Connection Pooling feature in OO4O </strong></font></p>
+
+<p align="center"><font color="#008000"><strong>OO4O related code is in bold </strong></font></p>
+
+<hr>
+
+<p><font face="Times New Roman"><code><strong>'GLOBAL.ASA</strong></code></font></p>
+
+<p><code><samp>&lt;OBJECT RUNAT=Server SCOPE=Application ID=<strong>OraSession</strong>
+PROGID=&quot;<strong>OracleInProcServer.XOraSession</strong>&quot;&gt;&lt;/OBJECT&gt;<br>
+&lt;SCRIPT LANGUAGE=VBScript RUNAT=Server&gt; <br>
+Sub Application_OnStart<br>
+<br>
+'Get an instance of the Connection Pooling object and create a pool of OraDatabase <br>
+<strong>OraSession.CreateDatabasePool 1,40,200,&quot;exampledb&quot;,
+&quot;scott/tiger&quot;, 0</strong> <br>
+<br>
+End Sub</samp></code></p>
+
+<hr>
+
+<p><font color="#000000"><strong>'OO4ODEMO.ASP</strong></font></p>
+
+<p><code><samp>&lt;html&gt;<br>
+<br>
+&lt;head&gt;<br>
+&lt;title&gt;Oracle Objects For OLE (OO4O) 2.3 &lt;/title&gt;<br>
+&lt;/head&gt;<br>
+<br>
+&lt;body BGCOLOR=&quot;#FFFFFF&quot;&gt;<br>
+&lt;font FACE=&quot;ARIAL,HELVETICA&quot;&gt;<br>
+<br>
+&lt;h2 align=&quot;center&quot;&gt;Oracle Objects For OLE (OO4O) 2.3 &lt;/h2&gt;<br>
+<br>
+&lt;form ACTION=&quot;OO4ODEMO.asp&quot; METHOD=&quot;POST&quot;&gt;<br>
+&lt;%<br>
+SqlQuery = Request.Form(&quot;sqlquery&quot;) <br>
+%&gt;<br>
+&lt;p&gt;This sample executes a SQL &amp;quot;SELECT&amp;quot; query and returns the
+result as an HTML<br>
+table. The database connection used in this script is obtained from a pool that is created<br>
+when the &lt;strong&gt;global.asa&lt;/strong&gt; is executed. &lt;/p&gt;<br>
+&lt;p&gt;SQL Select Query: &lt;input SIZE=&quot;48&quot; NAME=&quot;sqlquery&quot;&gt;
+&lt;/p&gt;<br>
+&lt;p&gt;&lt;input TYPE=&quot;SUBMIT&quot;&gt; &lt;input TYPE=&quot;RESET&quot;&gt;
+&lt;input LANGUAGE=&quot;VBScript&quot; TYPE=&quot;button&quot;<br>
+VALUE=&quot;Show ASP Souce&quot; ONCLICK=&quot;Window.location.href =
+&amp;quot;oo4oasp.htm&amp;quot;&quot;<br>
+NAME=&quot;ShowSrc&quot;&gt;&lt;/p&gt;<br>
+&lt;/form&gt;<br>
+&lt;%<br>
+If SqlQuery = &quot;&quot; Then <br>
+%&gt;<br>
+&lt;% Else %&gt;<br>
+<br>
+&lt;table BORDER=&quot;1&quot;&gt;<br>
+&lt;%<br>
+<b>Set OraDatabase = OraSession.GetDatabaseFromPool(10)<br>
+Set OraDynaset = OraDatabase.CreateDynaset(SqlQuery,0)<br>
+Set Columns = OraDynaset.Fields</b><br>
+%&gt;<br>
+&lt;tr&gt;<br>
+&lt;td&gt;&lt;table BORDER=&quot;1&quot;&gt;<br>
+&lt;tr&gt;<br>
+&lt;% For i = 0 to <strong>Columns.Count</strong> - 1 %&gt;<br>
+&lt;td&gt;&lt;b&gt;&lt;% = <strong>Columns(i).Name</strong> %&gt;&lt;/b&gt;&lt;/td&gt;<br>
+&lt;% Next %&gt;<br>
+&lt;/tr&gt;<br>
+&lt;% while NOT <strong>OraDynaset.EOF</strong> %&gt;<br>
+&lt;tr&gt;<br>
+&lt;% For col = 0 to <strong>Columns.Count</strong> - 1 %&gt;<br>
+&lt;td&gt;&lt;% = <strong>Columns(col)</strong> %&gt;<br>
+&lt;/td&gt;<br>
+&lt;% Next %&gt;<br>
+&lt;/tr&gt;<br>
+&lt;% <strong>OraDynaset.MoveNext</strong> %&gt;<br>
+&lt;% WEnd %&gt;<br>
+&lt;/table&gt;<br>
+&lt;p&gt;&lt;/font&gt;&lt;%End If%&gt; &lt;/p&gt;<br>
+&lt;hr&gt;<br>
+&lt;/td&gt;<br>
+&lt;/tr&gt;<br>
+&lt;/table&gt;<br>
+&lt;/body&gt;<br>
+&lt;/html&gt;<br>
+</samp></code></p>
+</body>
+</html>

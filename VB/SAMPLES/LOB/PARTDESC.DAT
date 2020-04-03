@@ -1,0 +1,2292 @@
+--------------------------------------------------------------------------------
+Image Cartridge Frequently Asked Questions
+--------------------------------------------------------------------------------
+Last Updated:  Sept 2, 1997
+
+Here are some answers to problems that you might encounter while 
+installing and using the image cartridge.
+
+--------------------------------------------------------------------------------
+SECTION I: Configuration Issues
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+1)	Problem: I can't create a table using the image type.
+--------------------------------------------------------------------------------
+	Symptom: ORA-00902: invalid datatype
+	Answer:  The image cartridge was not properly installed.
+	Solution I: grant execute priviledges on the type.
+	  connect ordsys/ordsys
+	  grant execute on ordimgb to public;
+	  grant execute on ordimgf to public;
+
+	  If this fails, go to Solution II.
+
+	Solution II: Reinstall/Install the cartridge.
+	  On UNIX:
+		First, save the original install.log and sql.log file,
+		then try reinstalling. If it doesn't work, search for
+		ordimg in sql.log and check for errors. Then go to
+		Solution III.
+
+	  On NT:
+		Run ordiinst.sql, found in C:\ORANT\ORD80\IMG\ADMIN
+		If this fails, go to Solution III.
+		
+	Solution III:
+		If Solution II fails, install it by hand, following the
+		manual installation instructions in the README.txt,
+		found in ORACLE_HOME/ORD/IMG/ADMIN. On NT, it is in
+		C:\ORANT\ORD80\IMG\ADMIN
+		
+
+	  Manual Steps:
+	  	connect sys/change_on_install;
+	  	create user ORDSYS identified by ORDSYS;
+	  	grant connect, resource, create library to ORDSYS;
+          	connect ordsys/ordsys;
+	    For UNIX:
+	    	create library ordimglibS as '/oraclehome/lib/libordimg.so';
+
+	    	where oraclehome is the value of the ORACLE_HOME 
+	    	environment variable.
+
+	    For NT:
+	    	create library ordimglibS as 'C:\ORANT\BIN\ORDIMG80.DLL';
+
+	    	where C:\ORANT is the value of the oracle home directory.
+
+	  	@ordispec.sql
+	  	@ordibody.sql
+	  	grant execute on ordimgb to public;
+	  	grant execute on ordimgf to public;
+	   
+
+--------------------------------------------------------------------------------
+2) 	Problem: I created the cartridge as above now but I got errors
+		 while installing it.
+--------------------------------------------------------------------------------
+	Symptom: grant execute on ordimgb to public;
+	         ORA-04042: procedure, function, package, or 
+			    package body does not exist
+	Answer:  Check that you created the type in the ordsys user.
+
+
+	Symptom: MGR-00072: Warning: PACKAGE BODY ORDIMG_PKG created with
+		 compilation errors.
+
+	Symptom: PLS-00201: identifier 'ORDIMGLIBS' must be declared                    
+	Answer:  The shared library doesn't exist.
+	Solution: Recreate the library.
+	  For UNIX:
+	    	create library ordimglibS as 'oraclehome/lib/libordimg.so';
+
+	    	where oraclehome is the value of the ORACLE_HOME 
+	    	environment variable.
+	  For NT:
+	    	create library ordimglibS as 'C:\ORANT\BIN\ORDIMG80.DLL';
+
+	    	where C:\ORANT is the value of the oracle home directory.
+
+--------------------------------------------------------------------------------
+3)	Problem: The type exists, but I get weird errors when I try to use it.
+--------------------------------------------------------------------------------
+
+	Symptom: ORA-06520: PL/SQL: Error loading external library
+		 ORA-06522: ld.so.1: extprocextproc: fatal: /path/libordimg.so: 
+		 can't open file: errno=2
+		 ORA-06512: at "ORDSYS.ORDIMG_PKG", line 207
+	         ORA-06512: at "ORDSYS.ORDIMGF", line 8
+
+	Answer: The path for the shared library is invalid. 
+	Solution: Recreate the library with the full path name of the library. 	
+	  For UNIX:
+	    create library ordimglibS as '/oraclehome/lib/libordimg.so';
+
+	    where oraclehome is the value of the ORACLE_HOME 
+	    environment variable.
+	  For NT:
+	    create library ordimglibS as 'C:\ORANT\BIN\ORDIMG80.DLL';
+
+	    where C:\ORANT is the value of the oracle home directory.
+
+	Symptom: ORA-04068: existing state of packages has been discarded
+	         ORA-04063: package body "ORDSYS.ORDIMG_PKG" has errors
+		 ORA-06508: PL/SQL: could not find program unit being called
+		 ORA-06512: at "ORDSYS.ORDIMGF", line 8
+	Answer:  The library ORDIMGLIBS may not exist (see above) or the package
+		 needs to be recompiled.
+	Solution: Recompile the package.
+		connect ordsys/ordsys;
+		alter package ordimg_pkg compile
+
+--------------------------------------------------------------------------------
+4) 	Problem: I'm sure I installed the cartridge correctly, but I'm
+		 getting RPC errors:
+--------------------------------------------------------------------------------
+	Symptom: ORA-28576: lost RPC connection to external procedure agent    
+	Answer:  The connection information in tnsnames.ora and listener.ora
+		 is correct, but the program failed. This is due to 
+		 conflicting SID_NAME/SID entries in the listener.ora and 
+		 tnsnames.ora files. In other words, the extproc SID_NAME
+		 in listener.ora is also being used by another entry.
+	Solution:Change the SID_NAME for the extproc entry to something 
+		 unique, e.g. extproc or extproc2. Be sure to update the
+		 SID entry for extproc_connection_data in the tnsnames.ora 
+		 file to also refer to extproc or extproc2.
+	Answer:  It is also possible, although unlikely, that there is 
+		 a bug in the external callout that caused the 
+		 program to crash.  This, however, shouldn't happen
+		 with the imgdemo.dat image shipped with the product. 
+	Solution:Test using the imgdemo.dat image. If there are errors, then
+		 use the first solution above to track down a problem with the 
+		 external callout mechanism configuration. 
+	Solution:If there are no errors with the imgdemo.dat image, but 
+		 when you perform the same operations on your custom images 
+		 you get this error, then you've found a bug. Please notify 
+		 your support representative.
+
+	Symptom: ORA-28575: unable to open RPC connection to external 
+		 procedure agent
+		 ORA-06512: at "ORDSYS.ORDIMG_PKG", line 207
+		 ORA-06512: at "ORDSYS.ORDIMGF", line 8
+	Answer:  The external callout program 'extproc' in your tnsnames.ora 
+		 file is either invalid or not present.
+	Answer:  The external callout program 'extproc' in your listener.ora 
+		 file is either invalid or not present.
+	Solution: Add/edit the extproc entry in tnsnames.ora. 
+		  Check the network configuration guide for your platform
+		  for details on creating an entry for extproc.
+		
+		For UNIX: Add this line in 
+		          /oraclehome/network/admin/tnsnames.ora
+
+		extproc_connection_data =
+		(DESCRIPTION=(ADDRESS=(PROTOCOL=ipc)(KEY=yourkey))
+		(CONNECT_DATA=(SID=extproc)))   
+
+		For NT: Add/edit this line in
+		        C:\ORANT\NET80\ADMIN\TNSNAMES.ora
+
+		extproc_connection_data.world = (
+		(DESCRIPTION = 
+			(ADDRESS = 
+				(PROTOCOL=tcp) (HOST=yourhost) (PORT=1521)
+			)
+			(CONNECT_DATA = (SID=extproc))
+		)	
+
+	Solution: Add/edit the extproc entry in listener.ora.
+		  Check the network configuration guide for your platform
+		  for details on creating an entry for extproc.
+		  After you edit the listener.ora file, you must stop
+		  and restart the listener. 
+
+		For UNIX: Add/edit this line in 
+		          /oraclehome/network/admin/listener.ora
+
+
+		LISTENER = (ADDRESS_LIST=
+ 			(ADDRESS=(PROTOCOL=ipc)(KEY=yourkey))
+		)
+
+		SID_LIST_LISTENER = (SID_LIST=
+ 		(SID_DESC=(SID_NAME=yourdb)(ORACLE_HOME=/vobs/oracle))
+ 		(SID_DESC=(SID_NAME=extproc)(ORACLE_HOME=/vobs/oracle)
+				(PROGRAM=extproc))
+		)
+
+		To stop and restart the listener: lsnrctl
+		set password oracle
+		stop
+		start
+		quit
+
+		For NT: Add/edit this line in
+		        C:\ORANT\NET80\ADMIN\LISTENER.ora
+	
+		SID_LIST_LISTENER = 
+		  (SID_LIST=
+ 		    (SID_DESC=
+		      (SID_NAME=ORCL)
+		    )
+ 		    (SID_DESC=
+		      (SID_NAME=extproc) (PROGRAM=extproc)
+		    )
+		  )
+
+		To stop and restart the listener: lsnctl30
+		set password oracle
+		stop
+		start
+		quit
+
+		OR, open the control panel and open services. Stop and
+		restart the OracleTNSListenerXX service.
+
+--------------------------------------------------------------------------------
+IMPORTANT NOTES ABOUT NETWORKING FILES:
+--------------------------------------------------------------------------------
+
+		If you install the enterprise edition of the server over
+		an existing network installation, then your network
+		files may not be properly updated with the new external
+		procedure entries. In particular, the extproc entries
+		in both tnsnames.ora and listener.ora may not be present at 
+		all. This is a particular problem on NT. If you encounter
+		this problem on NT and the above instructions don't work, 
+		rename the network, net80 directories to something else, 
+		like 'onetwork' and 'onet80' and install the enterprise 
+		edition components again (without creating a database). 
+		This will reinstall the networking components. Your new
+		net80 directories should contain valid extproc entries. 
+		Add any other entries from the old directories and then 
+		you may delete the old directories.
+		
+--------------------------------------------------------------------------------
+5) 	Problem: How do I know when it works? Is there an easy script to run?
+--------------------------------------------------------------------------------
+	Answer:  The imgdemo program shipped with the cartridge should work 
+		 without errors. (Read the manual for instructions on how
+		 to set up the program)
+	Solution: Here is another example that will also check
+		 to see if you have the cartridge installed properly.
+	  	 Change the directory mapping to match your oracle installation.
+
+connect sys/change_on_install;
+create or replace directory images as '/oraclehome/ord/img/demo';
+grant read on directory images to public;
+connect ordsys/ordsys
+grant execute on ordimgf to public;
+grant execute on ordimgb to public;
+connect scott/tiger;
+drop table images;
+drop table files;
+create table images (image ordsys.ordimgb,id integer);
+create table files (imagef ordsys.ordimgf,id integer);
+declare
+  theimagef ordsys.ordimgf;
+  theimageb ordsys.ordimgb;
+begin
+  insert into files values
+(ordsys.ordimgf(bfilename('IMAGES','imgdemo.dat'),
+        NULL,NULL,NULL,NULL,NULL,NULL),1);
+  insert into images values (ordsys.ordimgb(empty_blob(),
+        NULL,NULL,NULL,NULL,NULL,NULL),1);
+  select a.image, b.imagef into theimageb, theimagef from
+        images a, files b where a.id=1 and b.id=a.id for update;
+  theimagef.setproperties;
+  theimagef.copycontent(theimageb.content);
+  theimageb.setproperties;
+  update images set image=theimageb where id=1;
+  update files set imagef=theimagef where id=1;
+  commit;
+end;
+/
+
+	If it runs successfully, you can assume that the cartridge is
+	properly installed.
+
+--------------------------------------------------------------------------------
+Section II: Usage Problems
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+1) 	Problem: What's the easiest way to load an image into a BLOB column?
+--------------------------------------------------------------------------------
+   	Answer:  The easiest way is to use the solution from question 5, above
+		 as an example. That example copies the contents of a BFILE
+		 image into a BLOB image.
+
+--------------------------------------------------------------------------------
+2) 	Problem: I have a simple select statement that doesn't seem to work: 
+		create table image (width integer);
+		insert into image values (123);
+		select width image.width from image,images;
+		WIDTH      WIDTH     
+		---------- ----------
+       		123        123
+--------------------------------------------------------------------------------
+   	Answer: You should always use a table alias when using types to prevent
+	   	naming conflicts.
+   	Solution: Rerun the statement using a table alias.
+		select width,t.image.width from image,images t;
+		WIDTH      IMAGE.WIDT
+		---------- ----------
+       		123        600
+
+--------------------------------------------------------------------------------
+3) 	Problem: Does the Import/Export utility support the image cartridge 
+		 directly?
+--------------------------------------------------------------------------------
+   	Answer: Yes. The 8.0.3+ version of the import/export utilities support
+		object types, so you don't need to do any extra work.
+		Import your tables containing the image type as you would any 
+		other table.
+
+--------------------------------------------------------------------------------
+4) 	Problem: Does SQL*Loader support the image cartridge?
+--------------------------------------------------------------------------------
+	Answer: No, not in 8.0.3 or 8.0.4.
+	Solution: Use the BFILE type ordimgf to access your images
+	directly, or use the CopyContent method to copy the data from the 
+	BFILE image to the BLOB image.
+	
+
+--------------------------------------------------------------------------------
+5)	Problem: Does the cartridge support read only media, such as CDROMs?
+--------------------------------------------------------------------------------
+	Answer: Yes. Create a directory mapping to your read-only media and
+		treat it like any other directory.
+	Solution:
+		connect sys/change_on_install
+		grant create directory to scott;
+		connect scott/tiger;
+		create directory myreadonlycds as 'E:\IMAGES';
+
+--------------------------------------------------------------------------------
+6) 	Problem: How do I extract the filename from a BFILE image
+--------------------------------------------------------------------------------
+	Answer: You can get the filename and directory name using the
+		dbms_lob package.
+	Solution:
+		connect scott/tiger;
+		set serveroutput on
+		declare
+		  imgf ordsys.ordimgf;
+		  filename varchar2(256);
+		  filepath varchar2(256);
+		begin
+		  select imagef into imgf from files where id=1;
+		  dbms_lob.filegetname(imgf.content,filepath,filename);
+		  -- filename is the name of the file
+		  -- filepath is the name of the directory
+		  dbms_output.put_line('The file ' || filename || 
+		  ' is in a directory known as ' || filepath || '.');
+			
+		end;
+		/
+	would produce:
+		The file imgdemo.dat is in a directory known as IMAGES.
+
+	
+--------------------------------------------------------------------------------
+7) 	Problem: How do I extract the full path from a BFILE image?
+--------------------------------------------------------------------------------
+	Answer: The full path name may be found in the view named 
+		ALL_DIRECTORIES.
+	Solution: The following selects the full path for the images directory.
+		select directory_path from all_directories 
+		where directory_name = 'IMAGES';
+
+
+--------------------------------------------------------------------------------
+Image Cartridge Frequently Asked Questions
+--------------------------------------------------------------------------------
+Last Updated:  Sept 2, 1997
+
+Here are some answers to problems that you might encounter while 
+installing and using the image cartridge.
+
+--------------------------------------------------------------------------------
+SECTION I: Configuration Issues
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+1)	Problem: I can't create a table using the image type.
+--------------------------------------------------------------------------------
+	Symptom: ORA-00902: invalid datatype
+	Answer:  The image cartridge was not properly installed.
+	Solution I: grant execute priviledges on the type.
+	  connect ordsys/ordsys
+	  grant execute on ordimgb to public;
+	  grant execute on ordimgf to public;
+
+	  If this fails, go to Solution II.
+
+	Solution II: Reinstall/Install the cartridge.
+	  On UNIX:
+		First, save the original install.log and sql.log file,
+		then try reinstalling. If it doesn't work, search for
+		ordimg in sql.log and check for errors. Then go to
+		Solution III.
+
+	  On NT:
+		Run ordiinst.sql, found in C:\ORANT\ORD80\IMG\ADMIN
+		If this fails, go to Solution III.
+		
+	Solution III:
+		If Solution II fails, install it by hand, following the
+		manual installation instructions in the README.txt,
+		found in ORACLE_HOME/ORD/IMG/ADMIN. On NT, it is in
+		C:\ORANT\ORD80\IMG\ADMIN
+		
+
+	  Manual Steps:
+	  	connect sys/change_on_install;
+	  	create user ORDSYS identified by ORDSYS;
+	  	grant connect, resource, create library to ORDSYS;
+          	connect ordsys/ordsys;
+	    For UNIX:
+	    	create library ordimglibS as '/oraclehome/lib/libordimg.so';
+
+	    	where oraclehome is the value of the ORACLE_HOME 
+	    	environment variable.
+
+	    For NT:
+	    	create library ordimglibS as 'C:\ORANT\BIN\ORDIMG80.DLL';
+
+	    	where C:\ORANT is the value of the oracle home directory.
+
+	  	@ordispec.sql
+	  	@ordibody.sql
+	  	grant execute on ordimgb to public;
+	  	grant execute on ordimgf to public;
+	   
+
+--------------------------------------------------------------------------------
+2) 	Problem: I created the cartridge as above now but I got errors
+		 while installing it.
+--------------------------------------------------------------------------------
+	Symptom: grant execute on ordimgb to public;
+	         ORA-04042: procedure, function, package, or 
+			    package body does not exist
+	Answer:  Check that you created the type in the ordsys user.
+
+
+	Symptom: MGR-00072: Warning: PACKAGE BODY ORDIMG_PKG created with
+		 compilation errors.
+
+	Symptom: PLS-00201: identifier 'ORDIMGLIBS' must be declared                    
+	Answer:  The shared library doesn't exist.
+	Solution: Recreate the library.
+	  For UNIX:
+	    	create library ordimglibS as 'oraclehome/lib/libordimg.so';
+
+	    	where oraclehome is the value of the ORACLE_HOME 
+	    	environment variable.
+	  For NT:
+	    	create library ordimglibS as 'C:\ORANT\BIN\ORDIMG80.DLL';
+
+	    	where C:\ORANT is the value of the oracle home directory.
+
+--------------------------------------------------------------------------------
+3)	Problem: The type exists, but I get weird errors when I try to use it.
+--------------------------------------------------------------------------------
+
+	Symptom: ORA-06520: PL/SQL: Error loading external library
+		 ORA-06522: ld.so.1: extprocextproc: fatal: /path/libordimg.so: 
+		 can't open file: errno=2
+		 ORA-06512: at "ORDSYS.ORDIMG_PKG", line 207
+	         ORA-06512: at "ORDSYS.ORDIMGF", line 8
+
+	Answer: The path for the shared library is invalid. 
+	Solution: Recreate the library with the full path name of the library. 	
+	  For UNIX:
+	    create library ordimglibS as '/oraclehome/lib/libordimg.so';
+
+	    where oraclehome is the value of the ORACLE_HOME 
+	    environment variable.
+	  For NT:
+	    create library ordimglibS as 'C:\ORANT\BIN\ORDIMG80.DLL';
+
+	    where C:\ORANT is the value of the oracle home directory.
+
+	Symptom: ORA-04068: existing state of packages has been discarded
+	         ORA-04063: package body "ORDSYS.ORDIMG_PKG" has errors
+		 ORA-06508: PL/SQL: could not find program unit being called
+		 ORA-06512: at "ORDSYS.ORDIMGF", line 8
+	Answer:  The library ORDIMGLIBS may not exist (see above) or the package
+		 needs to be recompiled.
+	Solution: Recompile the package.
+		connect ordsys/ordsys;
+		alter package ordimg_pkg compile
+
+--------------------------------------------------------------------------------
+4) 	Problem: I'm sure I installed the cartridge correctly, but I'm
+		 getting RPC errors:
+--------------------------------------------------------------------------------
+	Symptom: ORA-28576: lost RPC connection to external procedure agent    
+	Answer:  The connection information in tnsnames.ora and listener.ora
+		 is correct, but the program failed. This is due to 
+		 conflicting SID_NAME/SID entries in the listener.ora and 
+		 tnsnames.ora files. In other words, the extproc SID_NAME
+		 in listener.ora is also being used by another entry.
+	Solution:Change the SID_NAME for the extproc entry to something 
+		 unique, e.g. extproc or extproc2. Be sure to update the
+		 SID entry for extproc_connection_data in the tnsnames.ora 
+		 file to also refer to extproc or extproc2.
+	Answer:  It is also possible, although unlikely, that there is 
+		 a bug in the external callout that caused the 
+		 program to crash.  This, however, shouldn't happen
+		 with the imgdemo.dat image shipped with the product. 
+	Solution:Test using the imgdemo.dat image. If there are errors, then
+		 use the first solution above to track down a problem with the 
+		 external callout mechanism configuration. 
+	Solution:If there are no errors with the imgdemo.dat image, but 
+		 when you perform the same operations on your custom images 
+		 you get this error, then you've found a bug. Please notify 
+		 your support representative.
+
+	Symptom: ORA-28575: unable to open RPC connection to external 
+		 procedure agent
+		 ORA-06512: at "ORDSYS.ORDIMG_PKG", line 207
+		 ORA-06512: at "ORDSYS.ORDIMGF", line 8
+	Answer:  The external callout program 'extproc' in your tnsnames.ora 
+		 file is either invalid or not present.
+	Answer:  The external callout program 'extproc' in your listener.ora 
+		 file is either invalid or not present.
+	Solution: Add/edit the extproc entry in tnsnames.ora. 
+		  Check the network configuration guide for your platform
+		  for details on creating an entry for extproc.
+		
+		For UNIX: Add this line in 
+		          /oraclehome/network/admin/tnsnames.ora
+
+		extproc_connection_data =
+		(DESCRIPTION=(ADDRESS=(PROTOCOL=ipc)(KEY=yourkey))
+		(CONNECT_DATA=(SID=extproc)))   
+
+		For NT: Add/edit this line in
+		        C:\ORANT\NET80\ADMIN\TNSNAMES.ora
+
+		extproc_connection_data.world = (
+		(DESCRIPTION = 
+			(ADDRESS = 
+				(PROTOCOL=tcp) (HOST=yourhost) (PORT=1521)
+			)
+			(CONNECT_DATA = (SID=extproc))
+		)	
+
+	Solution: Add/edit the extproc entry in listener.ora.
+		  Check the network configuration guide for your platform
+		  for details on creating an entry for extproc.
+		  After you edit the listener.ora file, you must stop
+		  and restart the listener. 
+
+		For UNIX: Add/edit this line in 
+		          /oraclehome/network/admin/listener.ora
+
+
+		LISTENER = (ADDRESS_LIST=
+ 			(ADDRESS=(PROTOCOL=ipc)(KEY=yourkey))
+		)
+
+		SID_LIST_LISTENER = (SID_LIST=
+ 		(SID_DESC=(SID_NAME=yourdb)(ORACLE_HOME=/vobs/oracle))
+ 		(SID_DESC=(SID_NAME=extproc)(ORACLE_HOME=/vobs/oracle)
+				(PROGRAM=extproc))
+		)
+
+		To stop and restart the listener: lsnrctl
+		set password oracle
+		stop
+		start
+		quit
+
+		For NT: Add/edit this line in
+		        C:\ORANT\NET80\ADMIN\LISTENER.ora
+	
+		SID_LIST_LISTENER = 
+		  (SID_LIST=
+ 		    (SID_DESC=
+		      (SID_NAME=ORCL)
+		    )
+ 		    (SID_DESC=
+		      (SID_NAME=extproc) (PROGRAM=extproc)
+		    )
+		  )
+
+		To stop and restart the listener: lsnctl30
+		set password oracle
+		stop
+		start
+		quit
+
+		OR, open the control panel and open services. Stop and
+		restart the OracleTNSListenerXX service.
+
+--------------------------------------------------------------------------------
+IMPORTANT NOTES ABOUT NETWORKING FILES:
+--------------------------------------------------------------------------------
+
+		If you install the enterprise edition of the server over
+		an existing network installation, then your network
+		files may not be properly updated with the new external
+		procedure entries. In particular, the extproc entries
+		in both tnsnames.ora and listener.ora may not be present at 
+		all. This is a particular problem on NT. If you encounter
+		this problem on NT and the above instructions don't work, 
+		rename the network, net80 directories to something else, 
+		like 'onetwork' and 'onet80' and install the enterprise 
+		edition components again (without creating a database). 
+		This will reinstall the networking components. Your new
+		net80 directories should contain valid extproc entries. 
+		Add any other entries from the old directories and then 
+		you may delete the old directories.
+		
+--------------------------------------------------------------------------------
+5) 	Problem: How do I know when it works? Is there an easy script to run?
+--------------------------------------------------------------------------------
+	Answer:  The imgdemo program shipped with the cartridge should work 
+		 without errors. (Read the manual for instructions on how
+		 to set up the program)
+	Solution: Here is another example that will also check
+		 to see if you have the cartridge installed properly.
+	  	 Change the directory mapping to match your oracle installation.
+
+connect sys/change_on_install;
+create or replace directory images as '/oraclehome/ord/img/demo';
+grant read on directory images to public;
+connect ordsys/ordsys
+grant execute on ordimgf to public;
+grant execute on ordimgb to public;
+connect scott/tiger;
+drop table images;
+drop table files;
+create table images (image ordsys.ordimgb,id integer);
+create table files (imagef ordsys.ordimgf,id integer);
+declare
+  theimagef ordsys.ordimgf;
+  theimageb ordsys.ordimgb;
+begin
+  insert into files values
+(ordsys.ordimgf(bfilename('IMAGES','imgdemo.dat'),
+        NULL,NULL,NULL,NULL,NULL,NULL),1);
+  insert into images values (ordsys.ordimgb(empty_blob(),
+        NULL,NULL,NULL,NULL,NULL,NULL),1);
+  select a.image, b.imagef into theimageb, theimagef from
+        images a, files b where a.id=1 and b.id=a.id for update;
+  theimagef.setproperties;
+  theimagef.copycontent(theimageb.content);
+  theimageb.setproperties;
+  update images set image=theimageb where id=1;
+  update files set imagef=theimagef where id=1;
+  commit;
+end;
+/
+
+	If it runs successfully, you can assume that the cartridge is
+	properly installed.
+
+--------------------------------------------------------------------------------
+Section II: Usage Problems
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+1) 	Problem: What's the easiest way to load an image into a BLOB column?
+--------------------------------------------------------------------------------
+   	Answer:  The easiest way is to use the solution from question 5, above
+		 as an example. That example copies the contents of a BFILE
+		 image into a BLOB image.
+
+--------------------------------------------------------------------------------
+2) 	Problem: I have a simple select statement that doesn't seem to work: 
+		create table image (width integer);
+		insert into image values (123);
+		select width image.width from image,images;
+		WIDTH      WIDTH     
+		---------- ----------
+       		123        123
+--------------------------------------------------------------------------------
+   	Answer: You should always use a table alias when using types to prevent
+	   	naming conflicts.
+   	Solution: Rerun the statement using a table alias.
+		select width,t.image.width from image,images t;
+		WIDTH      IMAGE.WIDT
+		---------- ----------
+       		123        600
+
+--------------------------------------------------------------------------------
+3) 	Problem: Does the Import/Export utility support the image cartridge 
+		 directly?
+--------------------------------------------------------------------------------
+   	Answer: Yes. The 8.0.3+ version of the import/export utilities support
+		object types, so you don't need to do any extra work.
+		Import your tables containing the image type as you would any 
+		other table.
+
+--------------------------------------------------------------------------------
+4) 	Problem: Does SQL*Loader support the image cartridge?
+--------------------------------------------------------------------------------
+	Answer: No, not in 8.0.3 or 8.0.4.
+	Solution: Use the BFILE type ordimgf to access your images
+	directly, or use the CopyContent method to copy the data from the 
+	BFILE image to the BLOB image.
+	
+
+--------------------------------------------------------------------------------
+5)	Problem: Does the cartridge support read only media, such as CDROMs?
+--------------------------------------------------------------------------------
+	Answer: Yes. Create a directory mapping to your read-only media and
+		treat it like any other directory.
+	Solution:
+		connect sys/change_on_install
+		grant create directory to scott;
+		connect scott/tiger;
+		create directory myreadonlycds as 'E:\IMAGES';
+
+--------------------------------------------------------------------------------
+6) 	Problem: How do I extract the filename from a BFILE image
+--------------------------------------------------------------------------------
+	Answer: You can get the filename and directory name using the
+		dbms_lob package.
+	Solution:
+		connect scott/tiger;
+		set serveroutput on
+		declare
+		  imgf ordsys.ordimgf;
+		  filename varchar2(256);
+		  filepath varchar2(256);
+		begin
+		  select imagef into imgf from files where id=1;
+		  dbms_lob.filegetname(imgf.content,filepath,filename);
+		  -- filename is the name of the file
+		  -- filepath is the name of the directory
+		  dbms_output.put_line('The file ' || filename || 
+		  ' is in a directory known as ' || filepath || '.');
+			
+		end;
+		/
+	would produce:
+		The file imgdemo.dat is in a directory known as IMAGES.
+
+	
+--------------------------------------------------------------------------------
+7) 	Problem: How do I extract the full path from a BFILE image?
+--------------------------------------------------------------------------------
+	Answer: The full path name may be found in the view named 
+		ALL_DIRECTORIES.
+	Solution: The following selects the full path for the images directory.
+		select directory_path from all_directories 
+		where directory_name = 'IMAGES';
+
+
+--------------------------------------------------------------------------------
+Image Cartridge Frequently Asked Questions
+--------------------------------------------------------------------------------
+Last Updated:  Sept 2, 1997
+
+Here are some answers to problems that you might encounter while 
+installing and using the image cartridge.
+
+--------------------------------------------------------------------------------
+SECTION I: Configuration Issues
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+1)	Problem: I can't create a table using the image type.
+--------------------------------------------------------------------------------
+	Symptom: ORA-00902: invalid datatype
+	Answer:  The image cartridge was not properly installed.
+	Solution I: grant execute priviledges on the type.
+	  connect ordsys/ordsys
+	  grant execute on ordimgb to public;
+	  grant execute on ordimgf to public;
+
+	  If this fails, go to Solution II.
+
+	Solution II: Reinstall/Install the cartridge.
+	  On UNIX:
+		First, save the original install.log and sql.log file,
+		then try reinstalling. If it doesn't work, search for
+		ordimg in sql.log and check for errors. Then go to
+		Solution III.
+
+	  On NT:
+		Run ordiinst.sql, found in C:\ORANT\ORD80\IMG\ADMIN
+		If this fails, go to Solution III.
+		
+	Solution III:
+		If Solution II fails, install it by hand, following the
+		manual installation instructions in the README.txt,
+		found in ORACLE_HOME/ORD/IMG/ADMIN. On NT, it is in
+		C:\ORANT\ORD80\IMG\ADMIN
+		
+
+	  Manual Steps:
+	  	connect sys/change_on_install;
+	  	create user ORDSYS identified by ORDSYS;
+	  	grant connect, resource, create library to ORDSYS;
+          	connect ordsys/ordsys;
+	    For UNIX:
+	    	create library ordimglibS as '/oraclehome/lib/libordimg.so';
+
+	    	where oraclehome is the value of the ORACLE_HOME 
+	    	environment variable.
+
+	    For NT:
+	    	create library ordimglibS as 'C:\ORANT\BIN\ORDIMG80.DLL';
+
+	    	where C:\ORANT is the value of the oracle home directory.
+
+	  	@ordispec.sql
+	  	@ordibody.sql
+	  	grant execute on ordimgb to public;
+	  	grant execute on ordimgf to public;
+	   
+
+--------------------------------------------------------------------------------
+2) 	Problem: I created the cartridge as above now but I got errors
+		 while installing it.
+--------------------------------------------------------------------------------
+	Symptom: grant execute on ordimgb to public;
+	         ORA-04042: procedure, function, package, or 
+			    package body does not exist
+	Answer:  Check that you created the type in the ordsys user.
+
+
+	Symptom: MGR-00072: Warning: PACKAGE BODY ORDIMG_PKG created with
+		 compilation errors.
+
+	Symptom: PLS-00201: identifier 'ORDIMGLIBS' must be declared                    
+	Answer:  The shared library doesn't exist.
+	Solution: Recreate the library.
+	  For UNIX:
+	    	create library ordimglibS as 'oraclehome/lib/libordimg.so';
+
+	    	where oraclehome is the value of the ORACLE_HOME 
+	    	environment variable.
+	  For NT:
+	    	create library ordimglibS as 'C:\ORANT\BIN\ORDIMG80.DLL';
+
+	    	where C:\ORANT is the value of the oracle home directory.
+
+--------------------------------------------------------------------------------
+3)	Problem: The type exists, but I get weird errors when I try to use it.
+--------------------------------------------------------------------------------
+
+	Symptom: ORA-06520: PL/SQL: Error loading external library
+		 ORA-06522: ld.so.1: extprocextproc: fatal: /path/libordimg.so: 
+		 can't open file: errno=2
+		 ORA-06512: at "ORDSYS.ORDIMG_PKG", line 207
+	         ORA-06512: at "ORDSYS.ORDIMGF", line 8
+
+	Answer: The path for the shared library is invalid. 
+	Solution: Recreate the library with the full path name of the library. 	
+	  For UNIX:
+	    create library ordimglibS as '/oraclehome/lib/libordimg.so';
+
+	    where oraclehome is the value of the ORACLE_HOME 
+	    environment variable.
+	  For NT:
+	    create library ordimglibS as 'C:\ORANT\BIN\ORDIMG80.DLL';
+
+	    where C:\ORANT is the value of the oracle home directory.
+
+	Symptom: ORA-04068: existing state of packages has been discarded
+	         ORA-04063: package body "ORDSYS.ORDIMG_PKG" has errors
+		 ORA-06508: PL/SQL: could not find program unit being called
+		 ORA-06512: at "ORDSYS.ORDIMGF", line 8
+	Answer:  The library ORDIMGLIBS may not exist (see above) or the package
+		 needs to be recompiled.
+	Solution: Recompile the package.
+		connect ordsys/ordsys;
+		alter package ordimg_pkg compile
+
+--------------------------------------------------------------------------------
+4) 	Problem: I'm sure I installed the cartridge correctly, but I'm
+		 getting RPC errors:
+--------------------------------------------------------------------------------
+	Symptom: ORA-28576: lost RPC connection to external procedure agent    
+	Answer:  The connection information in tnsnames.ora and listener.ora
+		 is correct, but the program failed. This is due to 
+		 conflicting SID_NAME/SID entries in the listener.ora and 
+		 tnsnames.ora files. In other words, the extproc SID_NAME
+		 in listener.ora is also being used by another entry.
+	Solution:Change the SID_NAME for the extproc entry to something 
+		 unique, e.g. extproc or extproc2. Be sure to update the
+		 SID entry for extproc_connection_data in the tnsnames.ora 
+		 file to also refer to extproc or extproc2.
+	Answer:  It is also possible, although unlikely, that there is 
+		 a bug in the external callout that caused the 
+		 program to crash.  This, however, shouldn't happen
+		 with the imgdemo.dat image shipped with the product. 
+	Solution:Test using the imgdemo.dat image. If there are errors, then
+		 use the first solution above to track down a problem with the 
+		 external callout mechanism configuration. 
+	Solution:If there are no errors with the imgdemo.dat image, but 
+		 when you perform the same operations on your custom images 
+		 you get this error, then you've found a bug. Please notify 
+		 your support representative.
+
+	Symptom: ORA-28575: unable to open RPC connection to external 
+		 procedure agent
+		 ORA-06512: at "ORDSYS.ORDIMG_PKG", line 207
+		 ORA-06512: at "ORDSYS.ORDIMGF", line 8
+	Answer:  The external callout program 'extproc' in your tnsnames.ora 
+		 file is either invalid or not present.
+	Answer:  The external callout program 'extproc' in your listener.ora 
+		 file is either invalid or not present.
+	Solution: Add/edit the extproc entry in tnsnames.ora. 
+		  Check the network configuration guide for your platform
+		  for details on creating an entry for extproc.
+		
+		For UNIX: Add this line in 
+		          /oraclehome/network/admin/tnsnames.ora
+
+		extproc_connection_data =
+		(DESCRIPTION=(ADDRESS=(PROTOCOL=ipc)(KEY=yourkey))
+		(CONNECT_DATA=(SID=extproc)))   
+
+		For NT: Add/edit this line in
+		        C:\ORANT\NET80\ADMIN\TNSNAMES.ora
+
+		extproc_connection_data.world = (
+		(DESCRIPTION = 
+			(ADDRESS = 
+				(PROTOCOL=tcp) (HOST=yourhost) (PORT=1521)
+			)
+			(CONNECT_DATA = (SID=extproc))
+		)	
+
+	Solution: Add/edit the extproc entry in listener.ora.
+		  Check the network configuration guide for your platform
+		  for details on creating an entry for extproc.
+		  After you edit the listener.ora file, you must stop
+		  and restart the listener. 
+
+		For UNIX: Add/edit this line in 
+		          /oraclehome/network/admin/listener.ora
+
+
+		LISTENER = (ADDRESS_LIST=
+ 			(ADDRESS=(PROTOCOL=ipc)(KEY=yourkey))
+		)
+
+		SID_LIST_LISTENER = (SID_LIST=
+ 		(SID_DESC=(SID_NAME=yourdb)(ORACLE_HOME=/vobs/oracle))
+ 		(SID_DESC=(SID_NAME=extproc)(ORACLE_HOME=/vobs/oracle)
+				(PROGRAM=extproc))
+		)
+
+		To stop and restart the listener: lsnrctl
+		set password oracle
+		stop
+		start
+		quit
+
+		For NT: Add/edit this line in
+		        C:\ORANT\NET80\ADMIN\LISTENER.ora
+	
+		SID_LIST_LISTENER = 
+		  (SID_LIST=
+ 		    (SID_DESC=
+		      (SID_NAME=ORCL)
+		    )
+ 		    (SID_DESC=
+		      (SID_NAME=extproc) (PROGRAM=extproc)
+		    )
+		  )
+
+		To stop and restart the listener: lsnctl30
+		set password oracle
+		stop
+		start
+		quit
+
+		OR, open the control panel and open services. Stop and
+		restart the OracleTNSListenerXX service.
+
+--------------------------------------------------------------------------------
+IMPORTANT NOTES ABOUT NETWORKING FILES:
+--------------------------------------------------------------------------------
+
+		If you install the enterprise edition of the server over
+		an existing network installation, then your network
+		files may not be properly updated with the new external
+		procedure entries. In particular, the extproc entries
+		in both tnsnames.ora and listener.ora may not be present at 
+		all. This is a particular problem on NT. If you encounter
+		this problem on NT and the above instructions don't work, 
+		rename the network, net80 directories to something else, 
+		like 'onetwork' and 'onet80' and install the enterprise 
+		edition components again (without creating a database). 
+		This will reinstall the networking components. Your new
+		net80 directories should contain valid extproc entries. 
+		Add any other entries from the old directories and then 
+		you may delete the old directories.
+		
+--------------------------------------------------------------------------------
+5) 	Problem: How do I know when it works? Is there an easy script to run?
+--------------------------------------------------------------------------------
+	Answer:  The imgdemo program shipped with the cartridge should work 
+		 without errors. (Read the manual for instructions on how
+		 to set up the program)
+	Solution: Here is another example that will also check
+		 to see if you have the cartridge installed properly.
+	  	 Change the directory mapping to match your oracle installation.
+
+connect sys/change_on_install;
+create or replace directory images as '/oraclehome/ord/img/demo';
+grant read on directory images to public;
+connect ordsys/ordsys
+grant execute on ordimgf to public;
+grant execute on ordimgb to public;
+connect scott/tiger;
+drop table images;
+drop table files;
+create table images (image ordsys.ordimgb,id integer);
+create table files (imagef ordsys.ordimgf,id integer);
+declare
+  theimagef ordsys.ordimgf;
+  theimageb ordsys.ordimgb;
+begin
+  insert into files values
+(ordsys.ordimgf(bfilename('IMAGES','imgdemo.dat'),
+        NULL,NULL,NULL,NULL,NULL,NULL),1);
+  insert into images values (ordsys.ordimgb(empty_blob(),
+        NULL,NULL,NULL,NULL,NULL,NULL),1);
+  select a.image, b.imagef into theimageb, theimagef from
+        images a, files b where a.id=1 and b.id=a.id for update;
+  theimagef.setproperties;
+  theimagef.copycontent(theimageb.content);
+  theimageb.setproperties;
+  update images set image=theimageb where id=1;
+  update files set imagef=theimagef where id=1;
+  commit;
+end;
+/
+
+	If it runs successfully, you can assume that the cartridge is
+	properly installed.
+
+--------------------------------------------------------------------------------
+Section II: Usage Problems
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+1) 	Problem: What's the easiest way to load an image into a BLOB column?
+--------------------------------------------------------------------------------
+   	Answer:  The easiest way is to use the solution from question 5, above
+		 as an example. That example copies the contents of a BFILE
+		 image into a BLOB image.
+
+--------------------------------------------------------------------------------
+2) 	Problem: I have a simple select statement that doesn't seem to work: 
+		create table image (width integer);
+		insert into image values (123);
+		select width image.width from image,images;
+		WIDTH      WIDTH     
+		---------- ----------
+       		123        123
+--------------------------------------------------------------------------------
+   	Answer: You should always use a table alias when using types to prevent
+	   	naming conflicts.
+   	Solution: Rerun the statement using a table alias.
+		select width,t.image.width from image,images t;
+		WIDTH      IMAGE.WIDT
+		---------- ----------
+       		123        600
+
+--------------------------------------------------------------------------------
+3) 	Problem: Does the Import/Export utility support the image cartridge 
+		 directly?
+--------------------------------------------------------------------------------
+   	Answer: Yes. The 8.0.3+ version of the import/export utilities support
+		object types, so you don't need to do any extra work.
+		Import your tables containing the image type as you would any 
+		other table.
+
+--------------------------------------------------------------------------------
+4) 	Problem: Does SQL*Loader support the image cartridge?
+--------------------------------------------------------------------------------
+	Answer: No, not in 8.0.3 or 8.0.4.
+	Solution: Use the BFILE type ordimgf to access your images
+	directly, or use the CopyContent method to copy the data from the 
+	BFILE image to the BLOB image.
+	
+
+--------------------------------------------------------------------------------
+5)	Problem: Does the cartridge support read only media, such as CDROMs?
+--------------------------------------------------------------------------------
+	Answer: Yes. Create a directory mapping to your read-only media and
+		treat it like any other directory.
+	Solution:
+		connect sys/change_on_install
+		grant create directory to scott;
+		connect scott/tiger;
+		create directory myreadonlycds as 'E:\IMAGES';
+
+--------------------------------------------------------------------------------
+6) 	Problem: How do I extract the filename from a BFILE image
+--------------------------------------------------------------------------------
+	Answer: You can get the filename and directory name using the
+		dbms_lob package.
+	Solution:
+		connect scott/tiger;
+		set serveroutput on
+		declare
+		  imgf ordsys.ordimgf;
+		  filename varchar2(256);
+		  filepath varchar2(256);
+		begin
+		  select imagef into imgf from files where id=1;
+		  dbms_lob.filegetname(imgf.content,filepath,filename);
+		  -- filename is the name of the file
+		  -- filepath is the name of the directory
+		  dbms_output.put_line('The file ' || filename || 
+		  ' is in a directory known as ' || filepath || '.');
+			
+		end;
+		/
+	would produce:
+		The file imgdemo.dat is in a directory known as IMAGES.
+
+	
+--------------------------------------------------------------------------------
+7) 	Problem: How do I extract the full path from a BFILE image?
+--------------------------------------------------------------------------------
+	Answer: The full path name may be found in the view named 
+		ALL_DIRECTORIES.
+	Solution: The following selects the full path for the images directory.
+		select directory_path from all_directories 
+		where directory_name = 'IMAGES';
+
+
+--------------------------------------------------------------------------------
+Image Cartridge Frequently Asked Questions
+--------------------------------------------------------------------------------
+Last Updated:  Sept 2, 1997
+
+Here are some answers to problems that you might encounter while 
+installing and using the image cartridge.
+
+--------------------------------------------------------------------------------
+SECTION I: Configuration Issues
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+1)	Problem: I can't create a table using the image type.
+--------------------------------------------------------------------------------
+	Symptom: ORA-00902: invalid datatype
+	Answer:  The image cartridge was not properly installed.
+	Solution I: grant execute priviledges on the type.
+	  connect ordsys/ordsys
+	  grant execute on ordimgb to public;
+	  grant execute on ordimgf to public;
+
+	  If this fails, go to Solution II.
+
+	Solution II: Reinstall/Install the cartridge.
+	  On UNIX:
+		First, save the original install.log and sql.log file,
+		then try reinstalling. If it doesn't work, search for
+		ordimg in sql.log and check for errors. Then go to
+		Solution III.
+
+	  On NT:
+		Run ordiinst.sql, found in C:\ORANT\ORD80\IMG\ADMIN
+		If this fails, go to Solution III.
+		
+	Solution III:
+		If Solution II fails, install it by hand, following the
+		manual installation instructions in the README.txt,
+		found in ORACLE_HOME/ORD/IMG/ADMIN. On NT, it is in
+		C:\ORANT\ORD80\IMG\ADMIN
+		
+
+	  Manual Steps:
+	  	connect sys/change_on_install;
+	  	create user ORDSYS identified by ORDSYS;
+	  	grant connect, resource, create library to ORDSYS;
+          	connect ordsys/ordsys;
+	    For UNIX:
+	    	create library ordimglibS as '/oraclehome/lib/libordimg.so';
+
+	    	where oraclehome is the value of the ORACLE_HOME 
+	    	environment variable.
+
+	    For NT:
+	    	create library ordimglibS as 'C:\ORANT\BIN\ORDIMG80.DLL';
+
+	    	where C:\ORANT is the value of the oracle home directory.
+
+	  	@ordispec.sql
+	  	@ordibody.sql
+	  	grant execute on ordimgb to public;
+	  	grant execute on ordimgf to public;
+	   
+
+--------------------------------------------------------------------------------
+2) 	Problem: I created the cartridge as above now but I got errors
+		 while installing it.
+--------------------------------------------------------------------------------
+	Symptom: grant execute on ordimgb to public;
+	         ORA-04042: procedure, function, package, or 
+			    package body does not exist
+	Answer:  Check that you created the type in the ordsys user.
+
+
+	Symptom: MGR-00072: Warning: PACKAGE BODY ORDIMG_PKG created with
+		 compilation errors.
+
+	Symptom: PLS-00201: identifier 'ORDIMGLIBS' must be declared                    
+	Answer:  The shared library doesn't exist.
+	Solution: Recreate the library.
+	  For UNIX:
+	    	create library ordimglibS as 'oraclehome/lib/libordimg.so';
+
+	    	where oraclehome is the value of the ORACLE_HOME 
+	    	environment variable.
+	  For NT:
+	    	create library ordimglibS as 'C:\ORANT\BIN\ORDIMG80.DLL';
+
+	    	where C:\ORANT is the value of the oracle home directory.
+
+--------------------------------------------------------------------------------
+3)	Problem: The type exists, but I get weird errors when I try to use it.
+--------------------------------------------------------------------------------
+
+	Symptom: ORA-06520: PL/SQL: Error loading external library
+		 ORA-06522: ld.so.1: extprocextproc: fatal: /path/libordimg.so: 
+		 can't open file: errno=2
+		 ORA-06512: at "ORDSYS.ORDIMG_PKG", line 207
+	         ORA-06512: at "ORDSYS.ORDIMGF", line 8
+
+	Answer: The path for the shared library is invalid. 
+	Solution: Recreate the library with the full path name of the library. 	
+	  For UNIX:
+	    create library ordimglibS as '/oraclehome/lib/libordimg.so';
+
+	    where oraclehome is the value of the ORACLE_HOME 
+	    environment variable.
+	  For NT:
+	    create library ordimglibS as 'C:\ORANT\BIN\ORDIMG80.DLL';
+
+	    where C:\ORANT is the value of the oracle home directory.
+
+	Symptom: ORA-04068: existing state of packages has been discarded
+	         ORA-04063: package body "ORDSYS.ORDIMG_PKG" has errors
+		 ORA-06508: PL/SQL: could not find program unit being called
+		 ORA-06512: at "ORDSYS.ORDIMGF", line 8
+	Answer:  The library ORDIMGLIBS may not exist (see above) or the package
+		 needs to be recompiled.
+	Solution: Recompile the package.
+		connect ordsys/ordsys;
+		alter package ordimg_pkg compile
+
+--------------------------------------------------------------------------------
+4) 	Problem: I'm sure I installed the cartridge correctly, but I'm
+		 getting RPC errors:
+--------------------------------------------------------------------------------
+	Symptom: ORA-28576: lost RPC connection to external procedure agent    
+	Answer:  The connection information in tnsnames.ora and listener.ora
+		 is correct, but the program failed. This is due to 
+		 conflicting SID_NAME/SID entries in the listener.ora and 
+		 tnsnames.ora files. In other words, the extproc SID_NAME
+		 in listener.ora is also being used by another entry.
+	Solution:Change the SID_NAME for the extproc entry to something 
+		 unique, e.g. extproc or extproc2. Be sure to update the
+		 SID entry for extproc_connection_data in the tnsnames.ora 
+		 file to also refer to extproc or extproc2.
+	Answer:  It is also possible, although unlikely, that there is 
+		 a bug in the external callout that caused the 
+		 program to crash.  This, however, shouldn't happen
+		 with the imgdemo.dat image shipped with the product. 
+	Solution:Test using the imgdemo.dat image. If there are errors, then
+		 use the first solution above to track down a problem with the 
+		 external callout mechanism configuration. 
+	Solution:If there are no errors with the imgdemo.dat image, but 
+		 when you perform the same operations on your custom images 
+		 you get this error, then you've found a bug. Please notify 
+		 your support representative.
+
+	Symptom: ORA-28575: unable to open RPC connection to external 
+		 procedure agent
+		 ORA-06512: at "ORDSYS.ORDIMG_PKG", line 207
+		 ORA-06512: at "ORDSYS.ORDIMGF", line 8
+	Answer:  The external callout program 'extproc' in your tnsnames.ora 
+		 file is either invalid or not present.
+	Answer:  The external callout program 'extproc' in your listener.ora 
+		 file is either invalid or not present.
+	Solution: Add/edit the extproc entry in tnsnames.ora. 
+		  Check the network configuration guide for your platform
+		  for details on creating an entry for extproc.
+		
+		For UNIX: Add this line in 
+		          /oraclehome/network/admin/tnsnames.ora
+
+		extproc_connection_data =
+		(DESCRIPTION=(ADDRESS=(PROTOCOL=ipc)(KEY=yourkey))
+		(CONNECT_DATA=(SID=extproc)))   
+
+		For NT: Add/edit this line in
+		        C:\ORANT\NET80\ADMIN\TNSNAMES.ora
+
+		extproc_connection_data.world = (
+		(DESCRIPTION = 
+			(ADDRESS = 
+				(PROTOCOL=tcp) (HOST=yourhost) (PORT=1521)
+			)
+			(CONNECT_DATA = (SID=extproc))
+		)	
+
+	Solution: Add/edit the extproc entry in listener.ora.
+		  Check the network configuration guide for your platform
+		  for details on creating an entry for extproc.
+		  After you edit the listener.ora file, you must stop
+		  and restart the listener. 
+
+		For UNIX: Add/edit this line in 
+		          /oraclehome/network/admin/listener.ora
+
+
+		LISTENER = (ADDRESS_LIST=
+ 			(ADDRESS=(PROTOCOL=ipc)(KEY=yourkey))
+		)
+
+		SID_LIST_LISTENER = (SID_LIST=
+ 		(SID_DESC=(SID_NAME=yourdb)(ORACLE_HOME=/vobs/oracle))
+ 		(SID_DESC=(SID_NAME=extproc)(ORACLE_HOME=/vobs/oracle)
+				(PROGRAM=extproc))
+		)
+
+		To stop and restart the listener: lsnrctl
+		set password oracle
+		stop
+		start
+		quit
+
+		For NT: Add/edit this line in
+		        C:\ORANT\NET80\ADMIN\LISTENER.ora
+	
+		SID_LIST_LISTENER = 
+		  (SID_LIST=
+ 		    (SID_DESC=
+		      (SID_NAME=ORCL)
+		    )
+ 		    (SID_DESC=
+		      (SID_NAME=extproc) (PROGRAM=extproc)
+		    )
+		  )
+
+		To stop and restart the listener: lsnctl30
+		set password oracle
+		stop
+		start
+		quit
+
+		OR, open the control panel and open services. Stop and
+		restart the OracleTNSListenerXX service.
+
+--------------------------------------------------------------------------------
+IMPORTANT NOTES ABOUT NETWORKING FILES:
+--------------------------------------------------------------------------------
+
+		If you install the enterprise edition of the server over
+		an existing network installation, then your network
+		files may not be properly updated with the new external
+		procedure entries. In particular, the extproc entries
+		in both tnsnames.ora and listener.ora may not be present at 
+		all. This is a particular problem on NT. If you encounter
+		this problem on NT and the above instructions don't work, 
+		rename the network, net80 directories to something else, 
+		like 'onetwork' and 'onet80' and install the enterprise 
+		edition components again (without creating a database). 
+		This will reinstall the networking components. Your new
+		net80 directories should contain valid extproc entries. 
+		Add any other entries from the old directories and then 
+		you may delete the old directories.
+		
+--------------------------------------------------------------------------------
+5) 	Problem: How do I know when it works? Is there an easy script to run?
+--------------------------------------------------------------------------------
+	Answer:  The imgdemo program shipped with the cartridge should work 
+		 without errors. (Read the manual for instructions on how
+		 to set up the program)
+	Solution: Here is another example that will also check
+		 to see if you have the cartridge installed properly.
+	  	 Change the directory mapping to match your oracle installation.
+
+connect sys/change_on_install;
+create or replace directory images as '/oraclehome/ord/img/demo';
+grant read on directory images to public;
+connect ordsys/ordsys
+grant execute on ordimgf to public;
+grant execute on ordimgb to public;
+connect scott/tiger;
+drop table images;
+drop table files;
+create table images (image ordsys.ordimgb,id integer);
+create table files (imagef ordsys.ordimgf,id integer);
+declare
+  theimagef ordsys.ordimgf;
+  theimageb ordsys.ordimgb;
+begin
+  insert into files values
+(ordsys.ordimgf(bfilename('IMAGES','imgdemo.dat'),
+        NULL,NULL,NULL,NULL,NULL,NULL),1);
+  insert into images values (ordsys.ordimgb(empty_blob(),
+        NULL,NULL,NULL,NULL,NULL,NULL),1);
+  select a.image, b.imagef into theimageb, theimagef from
+        images a, files b where a.id=1 and b.id=a.id for update;
+  theimagef.setproperties;
+  theimagef.copycontent(theimageb.content);
+  theimageb.setproperties;
+  update images set image=theimageb where id=1;
+  update files set imagef=theimagef where id=1;
+  commit;
+end;
+/
+
+	If it runs successfully, you can assume that the cartridge is
+	properly installed.
+
+--------------------------------------------------------------------------------
+Section II: Usage Problems
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+1) 	Problem: What's the easiest way to load an image into a BLOB column?
+--------------------------------------------------------------------------------
+   	Answer:  The easiest way is to use the solution from question 5, above
+		 as an example. That example copies the contents of a BFILE
+		 image into a BLOB image.
+
+--------------------------------------------------------------------------------
+2) 	Problem: I have a simple select statement that doesn't seem to work: 
+		create table image (width integer);
+		insert into image values (123);
+		select width image.width from image,images;
+		WIDTH      WIDTH     
+		---------- ----------
+       		123        123
+--------------------------------------------------------------------------------
+   	Answer: You should always use a table alias when using types to prevent
+	   	naming conflicts.
+   	Solution: Rerun the statement using a table alias.
+		select width,t.image.width from image,images t;
+		WIDTH      IMAGE.WIDT
+		---------- ----------
+       		123        600
+
+--------------------------------------------------------------------------------
+3) 	Problem: Does the Import/Export utility support the image cartridge 
+		 directly?
+--------------------------------------------------------------------------------
+   	Answer: Yes. The 8.0.3+ version of the import/export utilities support
+		object types, so you don't need to do any extra work.
+		Import your tables containing the image type as you would any 
+		other table.
+
+--------------------------------------------------------------------------------
+4) 	Problem: Does SQL*Loader support the image cartridge?
+--------------------------------------------------------------------------------
+	Answer: No, not in 8.0.3 or 8.0.4.
+	Solution: Use the BFILE type ordimgf to access your images
+	directly, or use the CopyContent method to copy the data from the 
+	BFILE image to the BLOB image.
+	
+
+--------------------------------------------------------------------------------
+5)	Problem: Does the cartridge support read only media, such as CDROMs?
+--------------------------------------------------------------------------------
+	Answer: Yes. Create a directory mapping to your read-only media and
+		treat it like any other directory.
+	Solution:
+		connect sys/change_on_install
+		grant create directory to scott;
+		connect scott/tiger;
+		create directory myreadonlycds as 'E:\IMAGES';
+
+--------------------------------------------------------------------------------
+6) 	Problem: How do I extract the filename from a BFILE image
+--------------------------------------------------------------------------------
+	Answer: You can get the filename and directory name using the
+		dbms_lob package.
+	Solution:
+		connect scott/tiger;
+		set serveroutput on
+		declare
+		  imgf ordsys.ordimgf;
+		  filename varchar2(256);
+		  filepath varchar2(256);
+		begin
+		  select imagef into imgf from files where id=1;
+		  dbms_lob.filegetname(imgf.content,filepath,filename);
+		  -- filename is the name of the file
+		  -- filepath is the name of the directory
+		  dbms_output.put_line('The file ' || filename || 
+		  ' is in a directory known as ' || filepath || '.');
+			
+		end;
+		/
+	would produce:
+		The file imgdemo.dat is in a directory known as IMAGES.
+
+	
+--------------------------------------------------------------------------------
+7) 	Problem: How do I extract the full path from a BFILE image?
+--------------------------------------------------------------------------------
+	Answer: The full path name may be found in the view named 
+		ALL_DIRECTORIES.
+	Solution: The following selects the full path for the images directory.
+		select directory_path from all_directories 
+		where directory_name = 'IMAGES';
+
+
+--------------------------------------------------------------------------------
+Image Cartridge Frequently Asked Questions
+--------------------------------------------------------------------------------
+Last Updated:  Sept 2, 1997
+
+Here are some answers to problems that you might encounter while 
+installing and using the image cartridge.
+
+--------------------------------------------------------------------------------
+SECTION I: Configuration Issues
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+1)	Problem: I can't create a table using the image type.
+--------------------------------------------------------------------------------
+	Symptom: ORA-00902: invalid datatype
+	Answer:  The image cartridge was not properly installed.
+	Solution I: grant execute priviledges on the type.
+	  connect ordsys/ordsys
+	  grant execute on ordimgb to public;
+	  grant execute on ordimgf to public;
+
+	  If this fails, go to Solution II.
+
+	Solution II: Reinstall/Install the cartridge.
+	  On UNIX:
+		First, save the original install.log and sql.log file,
+		then try reinstalling. If it doesn't work, search for
+		ordimg in sql.log and check for errors. Then go to
+		Solution III.
+
+	  On NT:
+		Run ordiinst.sql, found in C:\ORANT\ORD80\IMG\ADMIN
+		If this fails, go to Solution III.
+		
+	Solution III:
+		If Solution II fails, install it by hand, following the
+		manual installation instructions in the README.txt,
+		found in ORACLE_HOME/ORD/IMG/ADMIN. On NT, it is in
+		C:\ORANT\ORD80\IMG\ADMIN
+		
+
+	  Manual Steps:
+	  	connect sys/change_on_install;
+	  	create user ORDSYS identified by ORDSYS;
+	  	grant connect, resource, create library to ORDSYS;
+          	connect ordsys/ordsys;
+	    For UNIX:
+	    	create library ordimglibS as '/oraclehome/lib/libordimg.so';
+
+	    	where oraclehome is the value of the ORACLE_HOME 
+	    	environment variable.
+
+	    For NT:
+	    	create library ordimglibS as 'C:\ORANT\BIN\ORDIMG80.DLL';
+
+	    	where C:\ORANT is the value of the oracle home directory.
+
+	  	@ordispec.sql
+	  	@ordibody.sql
+	  	grant execute on ordimgb to public;
+	  	grant execute on ordimgf to public;
+	   
+
+--------------------------------------------------------------------------------
+2) 	Problem: I created the cartridge as above now but I got errors
+		 while installing it.
+--------------------------------------------------------------------------------
+	Symptom: grant execute on ordimgb to public;
+	         ORA-04042: procedure, function, package, or 
+			    package body does not exist
+	Answer:  Check that you created the type in the ordsys user.
+
+
+	Symptom: MGR-00072: Warning: PACKAGE BODY ORDIMG_PKG created with
+		 compilation errors.
+
+	Symptom: PLS-00201: identifier 'ORDIMGLIBS' must be declared                    
+	Answer:  The shared library doesn't exist.
+	Solution: Recreate the library.
+	  For UNIX:
+	    	create library ordimglibS as 'oraclehome/lib/libordimg.so';
+
+	    	where oraclehome is the value of the ORACLE_HOME 
+	    	environment variable.
+	  For NT:
+	    	create library ordimglibS as 'C:\ORANT\BIN\ORDIMG80.DLL';
+
+	    	where C:\ORANT is the value of the oracle home directory.
+
+--------------------------------------------------------------------------------
+3)	Problem: The type exists, but I get weird errors when I try to use it.
+--------------------------------------------------------------------------------
+
+	Symptom: ORA-06520: PL/SQL: Error loading external library
+		 ORA-06522: ld.so.1: extprocextproc: fatal: /path/libordimg.so: 
+		 can't open file: errno=2
+		 ORA-06512: at "ORDSYS.ORDIMG_PKG", line 207
+	         ORA-06512: at "ORDSYS.ORDIMGF", line 8
+
+	Answer: The path for the shared library is invalid. 
+	Solution: Recreate the library with the full path name of the library. 	
+	  For UNIX:
+	    create library ordimglibS as '/oraclehome/lib/libordimg.so';
+
+	    where oraclehome is the value of the ORACLE_HOME 
+	    environment variable.
+	  For NT:
+	    create library ordimglibS as 'C:\ORANT\BIN\ORDIMG80.DLL';
+
+	    where C:\ORANT is the value of the oracle home directory.
+
+	Symptom: ORA-04068: existing state of packages has been discarded
+	         ORA-04063: package body "ORDSYS.ORDIMG_PKG" has errors
+		 ORA-06508: PL/SQL: could not find program unit being called
+		 ORA-06512: at "ORDSYS.ORDIMGF", line 8
+	Answer:  The library ORDIMGLIBS may not exist (see above) or the package
+		 needs to be recompiled.
+	Solution: Recompile the package.
+		connect ordsys/ordsys;
+		alter package ordimg_pkg compile
+
+--------------------------------------------------------------------------------
+4) 	Problem: I'm sure I installed the cartridge correctly, but I'm
+		 getting RPC errors:
+--------------------------------------------------------------------------------
+	Symptom: ORA-28576: lost RPC connection to external procedure agent    
+	Answer:  The connection information in tnsnames.ora and listener.ora
+		 is correct, but the program failed. This is due to 
+		 conflicting SID_NAME/SID entries in the listener.ora and 
+		 tnsnames.ora files. In other words, the extproc SID_NAME
+		 in listener.ora is also being used by another entry.
+	Solution:Change the SID_NAME for the extproc entry to something 
+		 unique, e.g. extproc or extproc2. Be sure to update the
+		 SID entry for extproc_connection_data in the tnsnames.ora 
+		 file to also refer to extproc or extproc2.
+	Answer:  It is also possible, although unlikely, that there is 
+		 a bug in the external callout that caused the 
+		 program to crash.  This, however, shouldn't happen
+		 with the imgdemo.dat image shipped with the product. 
+	Solution:Test using the imgdemo.dat image. If there are errors, then
+		 use the first solution above to track down a problem with the 
+		 external callout mechanism configuration. 
+	Solution:If there are no errors with the imgdemo.dat image, but 
+		 when you perform the same operations on your custom images 
+		 you get this error, then you've found a bug. Please notify 
+		 your support representative.
+
+	Symptom: ORA-28575: unable to open RPC connection to external 
+		 procedure agent
+		 ORA-06512: at "ORDSYS.ORDIMG_PKG", line 207
+		 ORA-06512: at "ORDSYS.ORDIMGF", line 8
+	Answer:  The external callout program 'extproc' in your tnsnames.ora 
+		 file is either invalid or not present.
+	Answer:  The external callout program 'extproc' in your listener.ora 
+		 file is either invalid or not present.
+	Solution: Add/edit the extproc entry in tnsnames.ora. 
+		  Check the network configuration guide for your platform
+		  for details on creating an entry for extproc.
+		
+		For UNIX: Add this line in 
+		          /oraclehome/network/admin/tnsnames.ora
+
+		extproc_connection_data =
+		(DESCRIPTION=(ADDRESS=(PROTOCOL=ipc)(KEY=yourkey))
+		(CONNECT_DATA=(SID=extproc)))   
+
+		For NT: Add/edit this line in
+		        C:\ORANT\NET80\ADMIN\TNSNAMES.ora
+
+		extproc_connection_data.world = (
+		(DESCRIPTION = 
+			(ADDRESS = 
+				(PROTOCOL=tcp) (HOST=yourhost) (PORT=1521)
+			)
+			(CONNECT_DATA = (SID=extproc))
+		)	
+
+	Solution: Add/edit the extproc entry in listener.ora.
+		  Check the network configuration guide for your platform
+		  for details on creating an entry for extproc.
+		  After you edit the listener.ora file, you must stop
+		  and restart the listener. 
+
+		For UNIX: Add/edit this line in 
+		          /oraclehome/network/admin/listener.ora
+
+
+		LISTENER = (ADDRESS_LIST=
+ 			(ADDRESS=(PROTOCOL=ipc)(KEY=yourkey))
+		)
+
+		SID_LIST_LISTENER = (SID_LIST=
+ 		(SID_DESC=(SID_NAME=yourdb)(ORACLE_HOME=/vobs/oracle))
+ 		(SID_DESC=(SID_NAME=extproc)(ORACLE_HOME=/vobs/oracle)
+				(PROGRAM=extproc))
+		)
+
+		To stop and restart the listener: lsnrctl
+		set password oracle
+		stop
+		start
+		quit
+
+		For NT: Add/edit this line in
+		        C:\ORANT\NET80\ADMIN\LISTENER.ora
+	
+		SID_LIST_LISTENER = 
+		  (SID_LIST=
+ 		    (SID_DESC=
+		      (SID_NAME=ORCL)
+		    )
+ 		    (SID_DESC=
+		      (SID_NAME=extproc) (PROGRAM=extproc)
+		    )
+		  )
+
+		To stop and restart the listener: lsnctl30
+		set password oracle
+		stop
+		start
+		quit
+
+		OR, open the control panel and open services. Stop and
+		restart the OracleTNSListenerXX service.
+
+--------------------------------------------------------------------------------
+IMPORTANT NOTES ABOUT NETWORKING FILES:
+--------------------------------------------------------------------------------
+
+		If you install the enterprise edition of the server over
+		an existing network installation, then your network
+		files may not be properly updated with the new external
+		procedure entries. In particular, the extproc entries
+		in both tnsnames.ora and listener.ora may not be present at 
+		all. This is a particular problem on NT. If you encounter
+		this problem on NT and the above instructions don't work, 
+		rename the network, net80 directories to something else, 
+		like 'onetwork' and 'onet80' and install the enterprise 
+		edition components again (without creating a database). 
+		This will reinstall the networking components. Your new
+		net80 directories should contain valid extproc entries. 
+		Add any other entries from the old directories and then 
+		you may delete the old directories.
+		
+--------------------------------------------------------------------------------
+5) 	Problem: How do I know when it works? Is there an easy script to run?
+--------------------------------------------------------------------------------
+	Answer:  The imgdemo program shipped with the cartridge should work 
+		 without errors. (Read the manual for instructions on how
+		 to set up the program)
+	Solution: Here is another example that will also check
+		 to see if you have the cartridge installed properly.
+	  	 Change the directory mapping to match your oracle installation.
+
+connect sys/change_on_install;
+create or replace directory images as '/oraclehome/ord/img/demo';
+grant read on directory images to public;
+connect ordsys/ordsys
+grant execute on ordimgf to public;
+grant execute on ordimgb to public;
+connect scott/tiger;
+drop table images;
+drop table files;
+create table images (image ordsys.ordimgb,id integer);
+create table files (imagef ordsys.ordimgf,id integer);
+declare
+  theimagef ordsys.ordimgf;
+  theimageb ordsys.ordimgb;
+begin
+  insert into files values
+(ordsys.ordimgf(bfilename('IMAGES','imgdemo.dat'),
+        NULL,NULL,NULL,NULL,NULL,NULL),1);
+  insert into images values (ordsys.ordimgb(empty_blob(),
+        NULL,NULL,NULL,NULL,NULL,NULL),1);
+  select a.image, b.imagef into theimageb, theimagef from
+        images a, files b where a.id=1 and b.id=a.id for update;
+  theimagef.setproperties;
+  theimagef.copycontent(theimageb.content);
+  theimageb.setproperties;
+  update images set image=theimageb where id=1;
+  update files set imagef=theimagef where id=1;
+  commit;
+end;
+/
+
+	If it runs successfully, you can assume that the cartridge is
+	properly installed.
+
+--------------------------------------------------------------------------------
+Section II: Usage Problems
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+1) 	Problem: What's the easiest way to load an image into a BLOB column?
+--------------------------------------------------------------------------------
+   	Answer:  The easiest way is to use the solution from question 5, above
+		 as an example. That example copies the contents of a BFILE
+		 image into a BLOB image.
+
+--------------------------------------------------------------------------------
+2) 	Problem: I have a simple select statement that doesn't seem to work: 
+		create table image (width integer);
+		insert into image values (123);
+		select width image.width from image,images;
+		WIDTH      WIDTH     
+		---------- ----------
+       		123        123
+--------------------------------------------------------------------------------
+   	Answer: You should always use a table alias when using types to prevent
+	   	naming conflicts.
+   	Solution: Rerun the statement using a table alias.
+		select width,t.image.width from image,images t;
+		WIDTH      IMAGE.WIDT
+		---------- ----------
+       		123        600
+
+--------------------------------------------------------------------------------
+3) 	Problem: Does the Import/Export utility support the image cartridge 
+		 directly?
+--------------------------------------------------------------------------------
+   	Answer: Yes. The 8.0.3+ version of the import/export utilities support
+		object types, so you don't need to do any extra work.
+		Import your tables containing the image type as you would any 
+		other table.
+
+--------------------------------------------------------------------------------
+4) 	Problem: Does SQL*Loader support the image cartridge?
+--------------------------------------------------------------------------------
+	Answer: No, not in 8.0.3 or 8.0.4.
+	Solution: Use the BFILE type ordimgf to access your images
+	directly, or use the CopyContent method to copy the data from the 
+	BFILE image to the BLOB image.
+	
+
+--------------------------------------------------------------------------------
+5)	Problem: Does the cartridge support read only media, such as CDROMs?
+--------------------------------------------------------------------------------
+	Answer: Yes. Create a directory mapping to your read-only media and
+		treat it like any other directory.
+	Solution:
+		connect sys/change_on_install
+		grant create directory to scott;
+		connect scott/tiger;
+		create directory myreadonlycds as 'E:\IMAGES';
+
+--------------------------------------------------------------------------------
+6) 	Problem: How do I extract the filename from a BFILE image
+--------------------------------------------------------------------------------
+	Answer: You can get the filename and directory name using the
+		dbms_lob package.
+	Solution:
+		connect scott/tiger;
+		set serveroutput on
+		declare
+		  imgf ordsys.ordimgf;
+		  filename varchar2(256);
+		  filepath varchar2(256);
+		begin
+		  select imagef into imgf from files where id=1;
+		  dbms_lob.filegetname(imgf.content,filepath,filename);
+		  -- filename is the name of the file
+		  -- filepath is the name of the directory
+		  dbms_output.put_line('The file ' || filename || 
+		  ' is in a directory known as ' || filepath || '.');
+			
+		end;
+		/
+	would produce:
+		The file imgdemo.dat is in a directory known as IMAGES.
+
+	
+--------------------------------------------------------------------------------
+7) 	Problem: How do I extract the full path from a BFILE image?
+--------------------------------------------------------------------------------
+	Answer: The full path name may be found in the view named 
+		ALL_DIRECTORIES.
+	Solution: The following selects the full path for the images directory.
+		select directory_path from all_directories 
+		where directory_name = 'IMAGES';
+
+
+--------------------------------------------------------------------------------
+Image Cartridge Frequently Asked Questions
+--------------------------------------------------------------------------------
+Last Updated:  Sept 2, 1997
+
+Here are some answers to problems that you might encounter while 
+installing and using the image cartridge.
+
+--------------------------------------------------------------------------------
+SECTION I: Configuration Issues
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+1)	Problem: I can't create a table using the image type.
+--------------------------------------------------------------------------------
+	Symptom: ORA-00902: invalid datatype
+	Answer:  The image cartridge was not properly installed.
+	Solution I: grant execute priviledges on the type.
+	  connect ordsys/ordsys
+	  grant execute on ordimgb to public;
+	  grant execute on ordimgf to public;
+
+	  If this fails, go to Solution II.
+
+	Solution II: Reinstall/Install the cartridge.
+	  On UNIX:
+		First, save the original install.log and sql.log file,
+		then try reinstalling. If it doesn't work, search for
+		ordimg in sql.log and check for errors. Then go to
+		Solution III.
+
+	  On NT:
+		Run ordiinst.sql, found in C:\ORANT\ORD80\IMG\ADMIN
+		If this fails, go to Solution III.
+		
+	Solution III:
+		If Solution II fails, install it by hand, following the
+		manual installation instructions in the README.txt,
+		found in ORACLE_HOME/ORD/IMG/ADMIN. On NT, it is in
+		C:\ORANT\ORD80\IMG\ADMIN
+		
+
+	  Manual Steps:
+	  	connect sys/change_on_install;
+	  	create user ORDSYS identified by ORDSYS;
+	  	grant connect, resource, create library to ORDSYS;
+          	connect ordsys/ordsys;
+	    For UNIX:
+	    	create library ordimglibS as '/oraclehome/lib/libordimg.so';
+
+	    	where oraclehome is the value of the ORACLE_HOME 
+	    	environment variable.
+
+	    For NT:
+	    	create library ordimglibS as 'C:\ORANT\BIN\ORDIMG80.DLL';
+
+	    	where C:\ORANT is the value of the oracle home directory.
+
+	  	@ordispec.sql
+	  	@ordibody.sql
+	  	grant execute on ordimgb to public;
+	  	grant execute on ordimgf to public;
+	   
+
+--------------------------------------------------------------------------------
+2) 	Problem: I created the cartridge as above now but I got errors
+		 while installing it.
+--------------------------------------------------------------------------------
+	Symptom: grant execute on ordimgb to public;
+	         ORA-04042: procedure, function, package, or 
+			    package body does not exist
+	Answer:  Check that you created the type in the ordsys user.
+
+
+	Symptom: MGR-00072: Warning: PACKAGE BODY ORDIMG_PKG created with
+		 compilation errors.
+
+	Symptom: PLS-00201: identifier 'ORDIMGLIBS' must be declared                    
+	Answer:  The shared library doesn't exist.
+	Solution: Recreate the library.
+	  For UNIX:
+	    	create library ordimglibS as 'oraclehome/lib/libordimg.so';
+
+	    	where oraclehome is the value of the ORACLE_HOME 
+	    	environment variable.
+	  For NT:
+	    	create library ordimglibS as 'C:\ORANT\BIN\ORDIMG80.DLL';
+
+	    	where C:\ORANT is the value of the oracle home directory.
+
+--------------------------------------------------------------------------------
+3)	Problem: The type exists, but I get weird errors when I try to use it.
+--------------------------------------------------------------------------------
+
+	Symptom: ORA-06520: PL/SQL: Error loading external library
+		 ORA-06522: ld.so.1: extprocextproc: fatal: /path/libordimg.so: 
+		 can't open file: errno=2
+		 ORA-06512: at "ORDSYS.ORDIMG_PKG", line 207
+	         ORA-06512: at "ORDSYS.ORDIMGF", line 8
+
+	Answer: The path for the shared library is invalid. 
+	Solution: Recreate the library with the full path name of the library. 	
+	  For UNIX:
+	    create library ordimglibS as '/oraclehome/lib/libordimg.so';
+
+	    where oraclehome is the value of the ORACLE_HOME 
+	    environment variable.
+	  For NT:
+	    create library ordimglibS as 'C:\ORANT\BIN\ORDIMG80.DLL';
+
+	    where C:\ORANT is the value of the oracle home directory.
+
+	Symptom: ORA-04068: existing state of packages has been discarded
+	         ORA-04063: package body "ORDSYS.ORDIMG_PKG" has errors
+		 ORA-06508: PL/SQL: could not find program unit being called
+		 ORA-06512: at "ORDSYS.ORDIMGF", line 8
+	Answer:  The library ORDIMGLIBS may not exist (see above) or the package
+		 needs to be recompiled.
+	Solution: Recompile the package.
+		connect ordsys/ordsys;
+		alter package ordimg_pkg compile
+
+--------------------------------------------------------------------------------
+4) 	Problem: I'm sure I installed the cartridge correctly, but I'm
+		 getting RPC errors:
+--------------------------------------------------------------------------------
+	Symptom: ORA-28576: lost RPC connection to external procedure agent    
+	Answer:  The connection information in tnsnames.ora and listener.ora
+		 is correct, but the program failed. This is due to 
+		 conflicting SID_NAME/SID entries in the listener.ora and 
+		 tnsnames.ora files. In other words, the extproc SID_NAME
+		 in listener.ora is also being used by another entry.
+	Solution:Change the SID_NAME for the extproc entry to something 
+		 unique, e.g. extproc or extproc2. Be sure to update the
+		 SID entry for extproc_connection_data in the tnsnames.ora 
+		 file to also refer to extproc or extproc2.
+	Answer:  It is also possible, although unlikely, that there is 
+		 a bug in the external callout that caused the 
+		 program to crash.  This, however, shouldn't happen
+		 with the imgdemo.dat image shipped with the product. 
+	Solution:Test using the imgdemo.dat image. If there are errors, then
+		 use the first solution above to track down a problem with the 
+		 external callout mechanism configuration. 
+	Solution:If there are no errors with the imgdemo.dat image, but 
+		 when you perform the same operations on your custom images 
+		 you get this error, then you've found a bug. Please notify 
+		 your support representative.
+
+	Symptom: ORA-28575: unable to open RPC connection to external 
+		 procedure agent
+		 ORA-06512: at "ORDSYS.ORDIMG_PKG", line 207
+		 ORA-06512: at "ORDSYS.ORDIMGF", line 8
+	Answer:  The external callout program 'extproc' in your tnsnames.ora 
+		 file is either invalid or not present.
+	Answer:  The external callout program 'extproc' in your listener.ora 
+		 file is either invalid or not present.
+	Solution: Add/edit the extproc entry in tnsnames.ora. 
+		  Check the network configuration guide for your platform
+		  for details on creating an entry for extproc.
+		
+		For UNIX: Add this line in 
+		          /oraclehome/network/admin/tnsnames.ora
+
+		extproc_connection_data =
+		(DESCRIPTION=(ADDRESS=(PROTOCOL=ipc)(KEY=yourkey))
+		(CONNECT_DATA=(SID=extproc)))   
+
+		For NT: Add/edit this line in
+		        C:\ORANT\NET80\ADMIN\TNSNAMES.ora
+
+		extproc_connection_data.world = (
+		(DESCRIPTION = 
+			(ADDRESS = 
+				(PROTOCOL=tcp) (HOST=yourhost) (PORT=1521)
+			)
+			(CONNECT_DATA = (SID=extproc))
+		)	
+
+	Solution: Add/edit the extproc entry in listener.ora.
+		  Check the network configuration guide for your platform
+		  for details on creating an entry for extproc.
+		  After you edit the listener.ora file, you must stop
+		  and restart the listener. 
+
+		For UNIX: Add/edit this line in 
+		          /oraclehome/network/admin/listener.ora
+
+
+		LISTENER = (ADDRESS_LIST=
+ 			(ADDRESS=(PROTOCOL=ipc)(KEY=yourkey))
+		)
+
+		SID_LIST_LISTENER = (SID_LIST=
+ 		(SID_DESC=(SID_NAME=yourdb)(ORACLE_HOME=/vobs/oracle))
+ 		(SID_DESC=(SID_NAME=extproc)(ORACLE_HOME=/vobs/oracle)
+				(PROGRAM=extproc))
+		)
+
+		To stop and restart the listener: lsnrctl
+		set password oracle
+		stop
+		start
+		quit
+
+		For NT: Add/edit this line in
+		        C:\ORANT\NET80\ADMIN\LISTENER.ora
+	
+		SID_LIST_LISTENER = 
+		  (SID_LIST=
+ 		    (SID_DESC=
+		      (SID_NAME=ORCL)
+		    )
+ 		    (SID_DESC=
+		      (SID_NAME=extproc) (PROGRAM=extproc)
+		    )
+		  )
+
+		To stop and restart the listener: lsnctl30
+		set password oracle
+		stop
+		start
+		quit
+
+		OR, open the control panel and open services. Stop and
+		restart the OracleTNSListenerXX service.
+
+--------------------------------------------------------------------------------
+IMPORTANT NOTES ABOUT NETWORKING FILES:
+--------------------------------------------------------------------------------
+
+		If you install the enterprise edition of the server over
+		an existing network installation, then your network
+		files may not be properly updated with the new external
+		procedure entries. In particular, the extproc entries
+		in both tnsnames.ora and listener.ora may not be present at 
+		all. This is a particular problem on NT. If you encounter
+		this problem on NT and the above instructions don't work, 
+		rename the network, net80 directories to something else, 
+		like 'onetwork' and 'onet80' and install the enterprise 
+		edition components again (without creating a database). 
+		This will reinstall the networking components. Your new
+		net80 directories should contain valid extproc entries. 
+		Add any other entries from the old directories and then 
+		you may delete the old directories.
+		
+--------------------------------------------------------------------------------
+5) 	Problem: How do I know when it works? Is there an easy script to run?
+--------------------------------------------------------------------------------
+	Answer:  The imgdemo program shipped with the cartridge should work 
+		 without errors. (Read the manual for instructions on how
+		 to set up the program)
+	Solution: Here is another example that will also check
+		 to see if you have the cartridge installed properly.
+	  	 Change the directory mapping to match your oracle installation.
+
+connect sys/change_on_install;
+create or replace directory images as '/oraclehome/ord/img/demo';
+grant read on directory images to public;
+connect ordsys/ordsys
+grant execute on ordimgf to public;
+grant execute on ordimgb to public;
+connect scott/tiger;
+drop table images;
+drop table files;
+create table images (image ordsys.ordimgb,id integer);
+create table files (imagef ordsys.ordimgf,id integer);
+declare
+  theimagef ordsys.ordimgf;
+  theimageb ordsys.ordimgb;
+begin
+  insert into files values
+(ordsys.ordimgf(bfilename('IMAGES','imgdemo.dat'),
+        NULL,NULL,NULL,NULL,NULL,NULL),1);
+  insert into images values (ordsys.ordimgb(empty_blob(),
+        NULL,NULL,NULL,NULL,NULL,NULL),1);
+  select a.image, b.imagef into theimageb, theimagef from
+        images a, files b where a.id=1 and b.id=a.id for update;
+  theimagef.setproperties;
+  theimagef.copycontent(theimageb.content);
+  theimageb.setproperties;
+  update images set image=theimageb where id=1;
+  update files set imagef=theimagef where id=1;
+  commit;
+end;
+/
+
+	If it runs successfully, you can assume that the cartridge is
+	properly installed.
+
+--------------------------------------------------------------------------------
+Section II: Usage Problems
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+1) 	Problem: What's the easiest way to load an image into a BLOB column?
+--------------------------------------------------------------------------------
+   	Answer:  The easiest way is to use the solution from question 5, above
+		 as an example. That example copies the contents of a BFILE
+		 image into a BLOB image.
+
+--------------------------------------------------------------------------------
+2) 	Problem: I have a simple select statement that doesn't seem to work: 
+		create table image (width integer);
+		insert into image values (123);
+		select width image.width from image,images;
+		WIDTH      WIDTH     
+		---------- ----------
+       		123        123
+--------------------------------------------------------------------------------
+   	Answer: You should always use a table alias when using types to prevent
+	   	naming conflicts.
+   	Solution: Rerun the statement using a table alias.
+		select width,t.image.width from image,images t;
+		WIDTH      IMAGE.WIDT
+		---------- ----------
+       		123        600
+
+--------------------------------------------------------------------------------
+3) 	Problem: Does the Import/Export utility support the image cartridge 
+		 directly?
+--------------------------------------------------------------------------------
+   	Answer: Yes. The 8.0.3+ version of the import/export utilities support
+		object types, so you don't need to do any extra work.
+		Import your tables containing the image type as you would any 
+		other table.
+
+--------------------------------------------------------------------------------
+4) 	Problem: Does SQL*Loader support the image cartridge?
+--------------------------------------------------------------------------------
+	Answer: No, not in 8.0.3 or 8.0.4.
+	Solution: Use the BFILE type ordimgf to access your images
+	directly, or use the CopyContent method to copy the data from the 
+	BFILE image to the BLOB image.
+	
+
+--------------------------------------------------------------------------------
+5)	Problem: Does the cartridge support read only media, such as CDROMs?
+--------------------------------------------------------------------------------
+	Answer: Yes. Create a directory mapping to your read-only media and
+		treat it like any other directory.
+	Solution:
+		connect sys/change_on_install
+		grant create directory to scott;
+		connect scott/tiger;
+		create directory myreadonlycds as 'E:\IMAGES';
+
+--------------------------------------------------------------------------------
+6) 	Problem: How do I extract the filename from a BFILE image
+--------------------------------------------------------------------------------
+	Answer: You can get the filename and directory name using the
+		dbms_lob package.
+	Solution:
+		connect scott/tiger;
+		set serveroutput on
+		declare
+		  imgf ordsys.ordimgf;
+		  filename varchar2(256);
+		  filepath varchar2(256);
+		begin
+		  select imagef into imgf from files where id=1;
+		  dbms_lob.filegetname(imgf.content,filepath,filename);
+		  -- filename is the name of the file
+		  -- filepath is the name of the directory
+		  dbms_output.put_line('The file ' || filename || 
+		  ' is in a directory known as ' || filepath || '.');
+			
+		end;
+		/
+	would produce:
+		The file imgdemo.dat is in a directory known as IMAGES.
+
+	
+--------------------------------------------------------------------------------
+7) 	Problem: How do I extract the full path from a BFILE image?
+--------------------------------------------------------------------------------
+	Answer: The full path name may be found in the view named 
+		ALL_DIRECTORIES.
+	Solution: The following selects the full path for the images directory.
+		select directory_path from all_directories 
+		where directory_name = 'IMAGES';
+
+91540

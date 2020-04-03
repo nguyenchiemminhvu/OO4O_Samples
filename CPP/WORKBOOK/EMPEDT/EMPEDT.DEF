@@ -1,0 +1,9 @@
+; empedt.def : Declares the module parameters for the application.
+
+NAME         EMPEDT32
+DESCRIPTION  'EMPEDT Windows Application'
+
+HEAPSIZE     1024   ; initial heap size
+; Stack size is passed as argument to linker's /STACK option
+
+

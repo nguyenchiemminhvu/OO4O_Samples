@@ -1,0 +1,7 @@
+; OO4O.def : declares the module parameters for the DLL.
+
+LIBRARY	     "OO4O"
+
+EXPORTS
+	HttpExtensionProc
+	GetExtensionVersion

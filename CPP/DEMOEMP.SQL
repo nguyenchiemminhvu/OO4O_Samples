@@ -1,0 +1,17 @@
+Drop table emp2;
+Create table emp2( EMPNO NUMBER(4) NOT NULL,ENAME VARCHAR2(10),JOB VARCHAR2(9),MGR NUMBER(4),HIREDATE DATE,SAL NUMBER(7,2),COMM NUMBER(7,2),DEPTNO NUMBER(2) NOT NULL,VACATION NUMBER,HOBBY VARCHAR2(15) );
+Insert into emp2 values (7369,'SMITH','CLERK',NULL,'17-DEC-80',2230,1581,20,0,'Windsurfing');
+Insert into emp2 values (7990,'JOHNSON','SALESMAN',7698,'20-FEB-81',1600,380,30,1,'Fishing');
+Insert into emp2 values (7521,'WARD','SALESMAN',7698,'22-FEB-81',1250,500,30,0,'Swimming');
+Insert into emp2 values (7566,'JONES','MANAGER',7839,'3-DEC-81',2975,NULL,20,1,'Shopping');
+Insert into emp2 values (7654,'MARTIN','SALESMAN',7698,'17-NOV-81',1250,130,30,1,'Fishing');
+Insert into emp2 values (7698,'BLAKE','MANAGER',7839,'1-MAY-81',2850,NULL,30,0,'Bowling');
+Insert into emp2 values (7782,'CLARK','MANAGER',7839,'9-JUN-81',2450,NULL,10,1,NULL);
+Insert into emp2 values (7788,'SCOTT','ANALYST',7566,'22-FEB-81',3000,NULL,20,1,'Swimming');
+Insert into emp2 values (7839,'KING','PRESIDENT',NULL,'12-JAN-83',5000,2000,10,0,'Windsurfing');
+Insert into emp2 values (7844,'TURNER','SALESMAN',7698,'9-JUN-81',1500,0,30,0,NULL);
+Insert into emp2 values (7876,'ADAMS','CLERK',7788,'2-APR-81',1100,NULL,20,1,NULL);
+Insert into emp2 values (7900,'JAMES','CLERK',7698,'09-DEC-82',950,NULL,30,NULL,'Fishing');
+Insert into emp2 values (7902,'FORD','ANALYST',7566,'23-JAN-82',3000,NULL,20,1,'Swimming');
+Insert into emp2 values (7934,'MILLER','CLERK',7782,'2-APR-81',1300,NULL,10,0,'Shopping');
+commit;

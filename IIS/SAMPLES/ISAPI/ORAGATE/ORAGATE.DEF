@@ -1,0 +1,7 @@
+; ORAGATE.def : declares the module parameters for the DLL.
+
+LIBRARY	     "ORAGATE"
+
+EXPORTS
+	HttpExtensionProc
+	GetExtensionVersion

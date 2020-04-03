@@ -1,0 +1,12 @@
+<OBJECT RUNAT=Server SCOPE=Application ID=OraSession    PROGID="OracleInProcServer.XOraSession"></OBJECT>
+<SCRIPT LANGUAGE=VBScript RUNAT=Server> 
+
+Sub Application_OnStart
+
+'Get an instance of the Connection Pooling object and create a pool of OraDatabase 
+OraSession.CreateDatabasePool 1,40,200,"", "scott/tiger", 0    
+
+End Sub
+
+
+</SCRIPT>

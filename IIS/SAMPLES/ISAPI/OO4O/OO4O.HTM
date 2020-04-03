@@ -1,0 +1,26 @@
+<HTML>
+<HEAD><TITLE>OO4O Sample</TITLE></HEAD>
+
+<BODY BGCOLOR="#FFFFFF"><FONT FACE="ARIAL,HELVETICA">
+<CENTER>
+<H2>OO4O ISAPI Extension Test</H2>
+
+<P>
+<BR> This is a simple test of an ISAPI Extension using OO4O to access an Oracle Database.
+
+<P>
+<FORM ACTION="oo4o.dll?Default">
+<Input TYPE=SUBMIT VALUE="Run">
+</FORM>
+
+<P>
+<BR> Enter a query and the ISAPI Extension will fetch the results.
+
+<FORM METHOD="POST" ACTION="oo4o.dll?Query">
+<P> Enter Query
+<INPUT NAME="Query">
+<INPUT TYPE=SUBMIT VALUE="Run">
+</FORM>
+</CENTER>
+
+</BODY></HTML>

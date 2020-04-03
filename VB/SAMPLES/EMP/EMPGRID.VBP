@@ -1,0 +1,37 @@
+Type=Exe
+Object={00028C01-0000-0000-0000-000000000046}#1.0#0; DBGRID32.OCX
+Object={92096210-97DF-11CF-9F27-02608C4BF3B5}#1.0#0; oradc.ocx
+Form=EMPGRID.FRM
+Module=EMPODC1; EMPODC.BAS
+IconForm="frmODC"
+Startup="frmODC"
+Title="EMPODC"
+ExeName32="EMPGRID.exe"
+Command32=""
+Name="EMPODC"
+HelpContextID="0"
+CompatibleMode="0"
+MajorVer=1
+MinorVer=0
+RevisionVer=0
+AutoIncrementVer=0
+ServerSupportFiles=0
+VersionCompanyName="Oracle"
+CompilationType=0
+OptimizationType=0
+FavorPentiumPro(tm)=0
+CodeViewDebugInfo=0
+NoAliasing=0
+BoundsCheck=0
+OverflowCheck=0
+FlPointCheck=0
+FDIVCheck=0
+UnroundedFP=0
+StartMode=0
+Unattended=0
+Retained=0
+ThreadPerObject=0
+MaxNumberOfThreads=1
+
+[MS Transaction Server]
+AutoRefresh=1

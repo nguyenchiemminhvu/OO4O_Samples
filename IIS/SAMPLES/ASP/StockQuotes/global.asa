@@ -1,0 +1,39 @@
+<OBJECT RUNAT=Server SCOPE=Application ID=OraSession    PROGID="OracleInProcServer.XOraSession"></OBJECT>
+<SCRIPT LANGUAGE="VBScript" RUNAT="Server">
+
+    'This file contains functions that are executed at the sturtup and 
+	' shutdown of the web server and at the beginning and end of a user session.
+
+
+
+	'In Application_OnStart subroutine, we initialize a connection pool that will 
+	' be used throughout the web site to connect to the Oracle database. 
+	' Connection pools are particularly suited for web sites that must both provide 
+	' dynamic content from a database and support large concurrent user populations. 
+	' Connection pooling allows the web site to perform faster.
+
+Sub Application_OnStart
+
+    'Create a pool of Oracle DBs. Initsize=20, maxsize=100, timeout=600 (in secs), 
+	' alias name = testalias,  Username/Password = scott/tiger  (The user should note 
+	' that the alias name must already have been created using Oracle Net8 Easy Config 
+	' tool.)
+
+    OraSession.CreateDatabasePool 20, 100, 600, "", "scott/tiger", 0
+
+End Sub
+
+Sub Application_OnEnd
+
+	'Destroys global pool of connections.
+	OraSession.DestroyDatabasePool 
+
+End Sub
+
+Sub Session_OnStart
+End Sub
+
+Sub Session_OnEnd
+End Sub
+
+</SCRIPT>
